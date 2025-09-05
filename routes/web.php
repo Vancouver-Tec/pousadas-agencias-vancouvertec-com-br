@@ -51,3 +51,19 @@ Route::get('/lang/{locale}', function ($locale) {
     }
     return redirect()->back();
 })->name('lang.switch');
+
+// Rotas de Favoritos
+Route::get('/client/favorites', [App\Http\Controllers\Client\FavoriteController::class, 'index'])->name('client.favorites.index');
+Route::post('/client/favorites/toggle', [App\Http\Controllers\Client\FavoriteController::class, 'toggle'])->name('client.favorites.toggle');
+Route::delete('/client/favorites/{id}', [App\Http\Controllers\Client\FavoriteController::class, 'destroy'])->name('client.favorites.destroy');
+
+// Rotas de Perfil
+Route::get('/client/profile', [App\Http\Controllers\Client\ProfileController::class, 'show'])->name('client.profile.show');
+Route::get('/client/profile/edit', [App\Http\Controllers\Client\ProfileController::class, 'edit'])->name('client.profile.edit');
+Route::put('/client/profile', [App\Http\Controllers\Client\ProfileController::class, 'update'])->name('client.profile.update');
+Route::get('/client/profile/password', [App\Http\Controllers\Client\ProfileController::class, 'password'])->name('client.profile.password');
+Route::put('/client/profile/password', [App\Http\Controllers\Client\ProfileController::class, 'updatePassword'])->name('client.profile.password.update');
+
+// Rota adicional para detalhes de reserva
+Route::get('/client/bookings/{id}', [App\Http\Controllers\Client\BookingController::class, 'show'])->name('client.bookings.show');
+Route::delete('/client/bookings/{id}/cancel', [App\Http\Controllers\Client\BookingController::class, 'cancel'])->name('client.bookings.cancel');

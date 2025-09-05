@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -24,6 +25,8 @@ class User extends Authenticatable
         'state',
         'country',
         'zip_code',
+        'preferred_language',
+        'is_active',
     ];
 
     protected $hidden = [
@@ -35,8 +38,26 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'birth_date' => 'date',
         'password' => 'hashed',
+        'is_active' => 'boolean',
     ];
 
+    // Relationships
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
+    // Helper methods
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
@@ -45,5 +66,10 @@ class User extends Authenticatable
     public function isClient(): bool
     {
         return $this->role === 'client';
+    }
+
+    public function getFullAddressAttribute(): string
+    {
+        return trim("{$this->address}, {$this->city}, {$this->state}, {$this->country}");
     }
 }
