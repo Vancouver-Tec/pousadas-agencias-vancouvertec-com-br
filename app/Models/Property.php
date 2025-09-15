@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Property extends Model
 {
@@ -12,11 +13,12 @@ class Property extends Model
 
     protected $fillable = [
         'name',
-        'description',
+        'description', 
         'type',
+        'property_type',
         'address',
-        'city',
-        'state',
+        'city_id',
+        'state_id',
         'country',
         'zip_code',
         'latitude',
@@ -26,31 +28,48 @@ class Property extends Model
         'bedrooms',
         'bathrooms',
         'amenities',
-        'images',
         'rating',
+        'average_rating',
         'reviews_count',
-        'is_active',
+        'active',
+        'featured',
         'instant_book',
         'check_in_hours',
         'check_out_hours',
         'house_rules',
-        'cancellation_policy',
+        'cancellation_policy'
     ];
 
     protected $casts = [
-        'price_per_night' => 'decimal:2',
+        'amenities' => 'array',
+        'check_in_hours' => 'array', 
+        'check_out_hours' => 'array',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
+        'price_per_night' => 'decimal:2',
         'rating' => 'decimal:2',
-        'is_active' => 'boolean',
-        'instant_book' => 'boolean',
-        'amenities' => 'array',
-        'images' => 'array',
-        'check_in_hours' => 'array',
-        'check_out_hours' => 'array',
+        'average_rating' => 'decimal:2',
+        'active' => 'boolean',
+        'featured' => 'boolean',
+        'instant_book' => 'boolean'
     ];
 
-    // Relationships
+    // Relacionamentos
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
+    }
+
+    public function state(): BelongsTo
+    {
+        return $this->belongsTo(State::class);
+    }
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(PropertyPhoto::class)->orderBy('sort_order');
+    }
+
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
@@ -58,7 +77,7 @@ class Property extends Model
 
     public function reviews(): HasMany
     {
-        return $this->hasMany(Review::class);
+        return $this->hasMany(Review::class)->where('is_public', true);
     }
 
     public function favorites(): HasMany
@@ -69,57 +88,48 @@ class Property extends Model
     // Scopes
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('active', true);
     }
 
-    public function scopeByType($query, $type)
+    public function scopeFeatured($query)
     {
-        return $query->where('type', $type);
+        return $query->where('featured', true);
     }
 
-    public function scopeByCity($query, $city)
+    public function scopeAvailable($query, $checkIn, $checkOut)
     {
-        return $query->where('city', 'like', "%{$city}%");
+        return $query->whereDoesntHave('bookings', function($bookingQuery) use ($checkIn, $checkOut) {
+            $bookingQuery->where('status', '!=', 'cancelled')
+                        ->where(function($dateQuery) use ($checkIn, $checkOut) {
+                            $dateQuery->whereBetween('check_in', [$checkIn, $checkOut])
+                                     ->orWhereBetween('check_out', [$checkIn, $checkOut])
+                                     ->orWhere(function($overlapQuery) use ($checkIn, $checkOut) {
+                                         $overlapQuery->where('check_in', '<=', $checkIn)
+                                                     ->where('check_out', '>=', $checkOut);
+                                     });
+                        });
+        });
     }
 
-    public function scopePriceRange($query, $min, $max)
+    // Accessors
+    public function getMainPhotoAttribute()
     {
-        return $query->whereBetween('price_per_night', [$min, $max]);
+        $photo = $this->photos()->where('is_primary', true)->first();
+        return $photo ? $photo->filename : 'property-placeholder.svg';
     }
 
-    // Helper methods
-    public function getFullAddressAttribute(): string
+    public function getFormattedPriceAttribute()
     {
-        return "{$this->address}, {$this->city}, {$this->state}, {$this->country}";
+        return 'R$ ' . number_format($this->price_per_night, 2, ',', '.');
     }
 
-    public function getMainImageAttribute(): ?string
+    public function getRatingStarsAttribute()
     {
-        return $this->images[0] ?? null;
-    }
-
-    public function updateRating(): void
-    {
-        $avgRating = $this->reviews()->where('is_public', true)->avg('rating');
-        $reviewsCount = $this->reviews()->where('is_public', true)->count();
-        
-        $this->update([
-            'rating' => round($avgRating, 2),
-            'reviews_count' => $reviewsCount,
-        ]);
-    }
-
-    public function isAvailable($checkIn, $checkOut): bool
-    {
-        return !$this->bookings()
-            ->whereIn('status', ['confirmed', 'pending'])
-            ->where(function ($query) use ($checkIn, $checkOut) {
-                $query->whereBetween('check_in', [$checkIn, $checkOut])
-                    ->orWhereBetween('check_out', [$checkIn, $checkOut])
-                    ->orWhere(function ($query) use ($checkIn, $checkOut) {
-                        $query->where('check_in', '<=', $checkIn)
-                            ->where('check_out', '>=', $checkOut);
-                    });
-            })->exists();
+        $rating = $this->average_rating ?: $this->rating;
+        $stars = '';
+        for ($i = 1; $i <= 5; $i++) {
+            $stars .= $i <= $rating ? '★' : '☆';
+        }
+        return $stars;
     }
 }

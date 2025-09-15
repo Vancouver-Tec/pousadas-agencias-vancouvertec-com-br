@@ -1,124 +1,170 @@
-<!DOCTYPE html>
-<html lang="{{ app()->getLocale() }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title }} - Vancouver-Tec Pousadas</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #003580 0%, #0057b8 100%);
-            color: white;
-            min-height: 100vh;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            text-align: center;
-            padding: 60px 0;
-        }
-        .header h1 {
-            font-size: 3em;
-            margin-bottom: 10px;
-        }
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-        .search-box {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 40px 0;
-            color: #333;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        .search-form {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr auto;
-            gap: 15px;
-            align-items: end;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        .btn-search {
-            background: #0071c2;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            height: fit-content;
-        }
-        .btn-search:hover {
-            background: #005999;
-        }
-        .status {
-            text-align: center;
-            padding: 40px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 8px;
-            margin-top: 40px;
-        }
-        @media (max-width: 768px) {
-            .search-form {
-                grid-template-columns: 1fr;
-            }
-            .header h1 {
-                font-size: 2em;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>{{ $title }}</h1>
-            <p>{{ $subtitle }}</p>
+@extends('layouts.site')
+
+@section('title', $title)
+
+@section('content')
+<!-- Hero Section -->
+<section class="booking-gradient text-white py-16">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">{{ $title }}</h1>
+            <p class="text-xl opacity-90">{{ $subtitle }}</p>
         </div>
 
-        <div class="search-box">
-            <form class="search-form" action="{{ route('properties.search') }}" method="GET">
-                <div class="form-group">
-                    <label>Para onde você vai?</label>
-                    <input type="text" name="destination" placeholder="Cidade, região, propriedade">
+        <!-- Search Form -->
+        <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-xl p-6">
+            <form action="{{ route('site.properties.index') }}" method="GET" id="searchForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Destino -->
+                <div class="relative">
+                    <label for="destination" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-map-marker-alt mr-1"></i>Para onde você vai?
+                    </label>
+                    <input type="text" 
+                           id="destination" 
+                           name="destination" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Cidade, região, propriedade"
+                           autocomplete="off">
+                    
+                    <!-- Suggestions Dropdown -->
+                    <div id="suggestions" class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 hidden search-suggestions"></div>
                 </div>
-                <div class="form-group">
-                    <label>Data de check-in</label>
-                    <input type="date" name="checkin" value="{{ date('Y-m-d') }}">
+
+                <!-- Check-in -->
+                <div>
+                    <label for="check_in" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-calendar-alt mr-1"></i>Check-in
+                    </label>
+                    <input type="date" 
+                           id="check_in" 
+                           name="check_in" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           value="{{ date('Y-m-d') }}"
+                           min="{{ date('Y-m-d') }}">
                 </div>
-                <div class="form-group">
-                    <label>Data de check-out</label>
-                    <input type="date" name="checkout" value="{{ date('Y-m-d', strtotime('+1 day')) }}">
+
+                <!-- Check-out -->
+                <div>
+                    <label for="check_out" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-calendar-alt mr-1"></i>Check-out
+                    </label>
+                    <input type="date" 
+                           id="check_out" 
+                           name="check_out" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           value="{{ date('Y-m-d', strtotime('+1 day')) }}"
+                           min="{{ date('Y-m-d', strtotime('+1 day')) }}">
                 </div>
-                <div class="form-group">
-                    <button type="submit" class="btn-search">Pesquisar</button>
+
+                <!-- Hóspedes e Buscar -->
+                <div>
+                    <label for="guests" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-users mr-1"></i>Hóspedes
+                    </label>
+                    <div class="flex">
+                        <select id="guests" 
+                                name="guests" 
+                                class="flex-1 px-4 py-3 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="1">1 hóspede</option>
+                            <option value="2">2 hóspedes</option>
+                            <option value="3">3 hóspedes</option>
+                            <option value="4">4 hóspedes</option>
+                            <option value="5">5+ hóspedes</option>
+                        </select>
+                        <button type="submit" 
+                                class="px-6 py-3 booking-blue-light text-white rounded-r-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
+    </div>
+</section>
 
-        <div class="status">
-            <h3>🎉 Sistema Vancouver-Tec está funcionando!</h3>
-            <p>Idioma atual: <strong>{{ strtoupper(app()->getLocale()) }}</strong></p>
-            <p>Middleware de idiomas: <strong>✅ Ativo</strong></p>
-            <p>Banco de dados: <strong>{{ config('database.default') }}</strong></p>
+<!-- Featured Properties -->
+@if($featuredProperties->count() > 0)
+<section class="py-16">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Propriedades em Destaque</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            @foreach($featuredProperties as $property)
+                <div class="property-card bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                    <div class="relative overflow-hidden h-48">
+                        @if($property->photos && $property->photos->count() > 0)
+                            <img src="{{ asset('uploads/properties/' . $property->photos->first()->filename) }}" 
+                                 alt="{{ $property->name }}"
+                                 class="property-image w-full h-full object-cover">
+                        @else
+                            <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-image text-gray-400 text-2xl"></i>
+                            </div>
+                        @endif
+                        <div class="absolute top-3 right-3">
+                            <span class="bg-yellow-400 text-yellow-900 px-2 py-1 rounded text-xs font-bold">
+                                <i class="fas fa-star mr-1"></i>{{ number_format($property->average_rating ?: $property->rating, 1) }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg text-gray-900 mb-2 truncate">{{ $property->name }}</h3>
+                        <p class="text-gray-600 text-sm mb-3 flex items-center">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            {{ $property->city }}, {{ $property->state }}
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-2xl font-bold text-gray-900">R$ {{ number_format($property->price_per_night, 0, ',', '.') }}</span>
+                                <span class="text-gray-600 text-sm"> / noite</span>
+                            </div>
+                            <a href="{{ route('site.properties.show', $property->id) }}" 
+                               class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition">
+                                Ver Detalhes
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
         </div>
     </div>
-</body>
-</html>
+</section>
+@endif
+
+<!-- Popular Destinations -->
+@if($popularDestinations->count() > 0)
+<section class="py-16 bg-gray-100">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Destinos Populares</h2>
+        
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            @foreach($popularDestinations as $destination)
+                <a href="{{ route('site.properties.index', ['destination' => $destination->city_name]) }}" 
+                   class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow text-center">
+                    <i class="fas fa-city text-2xl text-blue-600 mb-2"></i>
+                    <h3 class="font-bold text-gray-900">{{ $destination->city_name }}</h3>
+                    <p class="text-gray-600 text-sm">{{ $destination->properties_count }} propriedades</p>
+                </a>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
+<!-- Call to Action -->
+<section class="py-16 booking-gradient text-white">
+    <div class="container mx-auto px-4 text-center">
+        <h2 class="text-3xl font-bold mb-4">Pronto para começar sua aventura?</h2>
+        <p class="text-xl mb-8 opacity-90">Encontre a hospedagem perfeita para sua próxima viagem</p>
+        <a href="{{ route('site.properties.index') }}" 
+           class="bg-white text-blue-800 px-8 py-3 rounded-lg font-bold hover:bg-blue-50 transition-colors inline-block">
+            Explorar Propriedades
+        </a>
+    </div>
+</section>
+@endsection
+
+@push('scripts')
+<script src="{{ asset('js/search.js') }}"></script>
+@endpush

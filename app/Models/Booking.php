@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Booking extends Model
 {
@@ -31,7 +31,7 @@ class Booking extends Model
         'stripe_payment_intent_id',
         'special_requests',
         'cancellation_reason',
-        'cancelled_at',
+        'cancelled_at'
     ];
 
     protected $casts = [
@@ -42,10 +42,9 @@ class Booking extends Model
         'taxes' => 'decimal:2',
         'fees' => 'decimal:2',
         'total' => 'decimal:2',
-        'cancelled_at' => 'datetime',
+        'cancelled_at' => 'datetime'
     ];
 
-    // Relationships
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -56,54 +55,13 @@ class Booking extends Model
         return $this->belongsTo(Property::class);
     }
 
-    public function payments(): HasMany
+    public function payment(): HasOne
     {
-        return $this->hasMany(Payment::class);
+        return $this->hasOne(Payment::class);
     }
 
     public function review(): HasOne
     {
         return $this->hasOne(Review::class);
-    }
-
-    // Scopes
-    public function scopeActive($query)
-    {
-        return $query->whereIn('status', ['confirmed', 'pending']);
-    }
-
-    public function scopeCompleted($query)
-    {
-        return $query->where('status', 'completed');
-    }
-
-    // Helper methods
-    public static function generateBookingNumber(): string
-    {
-        return 'VT' . date('Ymd') . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
-    }
-
-    protected static function boot()
-    {
-        parent::boot();
-        
-        static::creating(function ($booking) {
-            if (empty($booking->booking_number)) {
-                $booking->booking_number = self::generateBookingNumber();
-            }
-        });
-    }
-
-    public function canBeCancelled(): bool
-    {
-        return $this->status === 'confirmed' && 
-               $this->check_in->gt(now()->addHours(24));
-    }
-
-    public function canBeReviewed(): bool
-    {
-        return $this->status === 'completed' && 
-               $this->check_out->lt(now()) && 
-               !$this->review;
     }
 }
