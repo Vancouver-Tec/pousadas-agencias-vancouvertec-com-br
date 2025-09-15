@@ -2,9 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Site\HomeController;
-use App\Http\Controllers\Site\PropertyController;
+use App\Http\Controllers\Site\PropertiesController;
 use App\Http\Controllers\Site\BookingController;
-use App\Http\Controllers\Site\AuthController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboard;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 
@@ -14,34 +13,53 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 |--------------------------------------------------------------------------
 */
 
-// Rotas do Site Público
-Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/search', [PropertyController::class, 'search'])->name('properties.search');
-Route::get('/property/{id}', [PropertyController::class, 'show'])->name('property.show');
-Route::get('/booking/{property}', [BookingController::class, 'create'])->name('booking.create');
+// Rotas do Site Público (alinhadas com layouts)
+Route::get('/', [HomeController::class, 'index'])->name('site.home');
+Route::get('/properties', [PropertiesController::class, 'index'])->name('site.properties.index');
+Route::get('/properties/{id}', [PropertiesController::class, 'show'])->name('site.properties.show');
 
-// Rotas de Autenticação
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// API de busca e sugestões
+Route::get('/api/search/suggestions', [PropertiesController::class, 'suggestions'])->name('site.search.suggestions');
+
+// Rotas de Booking
+Route::get('/booking/{property}', [BookingController::class, 'create'])->name('site.booking.create');
+Route::post('/booking', [BookingController::class, 'store'])->name('site.booking.store');
+
+// Rotas de Autenticação (Laravel padrão)
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
+    Route::get('/register', [App\Http\Controllers\Auth\RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [App\Http\Controllers\Auth\RegisterController::class, 'register']);
+});
+
+Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
 
 // Rotas do Painel Cliente (protegidas)
-Route::middleware(['auth', 'client'])->prefix('client')->group(function () {
-    Route::get('/dashboard', [ClientDashboard::class, 'index'])->name('client.dashboard');
-    Route::get('/bookings', [ClientDashboard::class, 'bookings'])->name('client.bookings');
-    Route::get('/profile', [ClientDashboard::class, 'profile'])->name('client.profile');
-    Route::put('/profile', [ClientDashboard::class, 'updateProfile'])->name('client.profile.update');
+Route::middleware(['auth', 'verified'])->prefix('client')->name('client.')->group(function () {
+    Route::get('/dashboard', [ClientDashboard::class, 'index'])->name('dashboard');
+    Route::get('/bookings', [ClientDashboard::class, 'bookings'])->name('bookings');
+    Route::get('/bookings/{id}', [App\Http\Controllers\Client\BookingController::class, 'show'])->name('bookings.show');
+    Route::delete('/bookings/{id}/cancel', [App\Http\Controllers\Client\BookingController::class, 'cancel'])->name('bookings.cancel');
+    
+    Route::get('/favorites', [App\Http\Controllers\Client\FavoriteController::class, 'index'])->name('favorites.index');
+    Route::post('/favorites/toggle', [App\Http\Controllers\Client\FavoriteController::class, 'toggle'])->name('favorites.toggle');
+    Route::delete('/favorites/{id}', [App\Http\Controllers\Client\FavoriteController::class, 'destroy'])->name('favorites.destroy');
+    
+    Route::get('/profile', [App\Http\Controllers\Client\ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [App\Http\Controllers\Client\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [App\Http\Controllers\Client\ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profile/password', [App\Http\Controllers\Client\ProfileController::class, 'password'])->name('profile.password');
+    Route::put('/profile/password', [App\Http\Controllers\Client\ProfileController::class, 'updatePassword'])->name('profile.password.update');
 });
 
 // Rotas do Painel Admin (protegidas)
-Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
-    Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('admin.dashboard');
-    Route::get('/properties', [AdminDashboard::class, 'properties'])->name('admin.properties');
-    Route::get('/bookings', [AdminDashboard::class, 'bookings'])->name('admin.bookings');
-    Route::get('/users', [AdminDashboard::class, 'users'])->name('admin.users');
-    Route::get('/settings', [AdminDashboard::class, 'settings'])->name('admin.settings');
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
+    Route::get('/properties', [AdminDashboard::class, 'properties'])->name('properties');
+    Route::get('/bookings', [AdminDashboard::class, 'bookings'])->name('bookings');
+    Route::get('/users', [AdminDashboard::class, 'users'])->name('users');
+    Route::get('/settings', [AdminDashboard::class, 'settings'])->name('settings');
 });
 
 // Rotas para alternar idioma
@@ -51,24 +69,3 @@ Route::get('/lang/{locale}', function ($locale) {
     }
     return redirect()->back();
 })->name('lang.switch');
-
-// Rotas de Favoritos
-Route::get('/client/favorites', [App\Http\Controllers\Client\FavoriteController::class, 'index'])->name('client.favorites.index');
-Route::post('/client/favorites/toggle', [App\Http\Controllers\Client\FavoriteController::class, 'toggle'])->name('client.favorites.toggle');
-Route::delete('/client/favorites/{id}', [App\Http\Controllers\Client\FavoriteController::class, 'destroy'])->name('client.favorites.destroy');
-
-// Rotas de Perfil
-Route::get('/client/profile', [App\Http\Controllers\Client\ProfileController::class, 'show'])->name('client.profile.show');
-Route::get('/client/profile/edit', [App\Http\Controllers\Client\ProfileController::class, 'edit'])->name('client.profile.edit');
-Route::put('/client/profile', [App\Http\Controllers\Client\ProfileController::class, 'update'])->name('client.profile.update');
-Route::get('/client/profile/password', [App\Http\Controllers\Client\ProfileController::class, 'password'])->name('client.profile.password');
-Route::put('/client/profile/password', [App\Http\Controllers\Client\ProfileController::class, 'updatePassword'])->name('client.profile.password.update');
-
-// Rota adicional para detalhes de reserva
-Route::get('/client/bookings/{id}', [App\Http\Controllers\Client\BookingController::class, 'show'])->name('client.bookings.show');
-Route::delete('/client/bookings/{id}/cancel', [App\Http\Controllers\Client\BookingController::class, 'cancel'])->name('client.bookings.cancel');
-
-// Rotas de busca
-Route::get('/properties', [Site\PropertyController::class, 'index'])->name('site.properties.index');
-Route::get('/properties/{id}', [Site\PropertyController::class, 'show'])->name('site.properties.show');
-Route::get('/search/suggestions', [Site\PropertyController::class, 'searchSuggestions'])->name('site.search.suggestions');
