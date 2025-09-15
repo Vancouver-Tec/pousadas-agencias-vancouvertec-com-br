@@ -33,3 +33,11 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
     Route::post('/payments/intent', [PaymentController::class, 'createPaymentIntent']);
     Route::post('/payments/confirm', [PaymentController::class, 'confirmPayment']);
 });
+
+// API de busca
+Route::prefix('search')->group(function () {
+    Route::get('/', [Api\SearchController::class, 'search']);
+    Route::get('/filters', [Api\SearchController::class, 'filters']);
+    Route::get('/suggestions', [Api\SearchController::class, 'suggestions']);
+    Route::get('/popular-destinations', [Api\SearchController::class, 'popularDestinations']);
+});

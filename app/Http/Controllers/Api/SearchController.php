@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\SearchService;
+use App\Http\Controllers\Site\PropertyController;
 use Illuminate\Http\Request;
 
 class SearchController extends Controller
@@ -52,16 +53,8 @@ class SearchController extends Controller
 
     public function suggestions(Request $request)
     {
-        $term = $request->get('term');
-        
-        if (strlen($term) < 2) {
-            return response()->json([
-                'success' => true,
-                'data' => []
-            ]);
-        }
-
-        $suggestions = app(PropertyController::class)->searchSuggestions($request);
+        $propertyController = new PropertyController($this->searchService);
+        $suggestions = $propertyController->searchSuggestions($request);
         
         return response()->json([
             'success' => true,

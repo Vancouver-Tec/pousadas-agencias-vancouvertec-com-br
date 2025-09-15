@@ -67,3 +67,8 @@ Route::put('/client/profile/password', [App\Http\Controllers\Client\ProfileContr
 // Rota adicional para detalhes de reserva
 Route::get('/client/bookings/{id}', [App\Http\Controllers\Client\BookingController::class, 'show'])->name('client.bookings.show');
 Route::delete('/client/bookings/{id}/cancel', [App\Http\Controllers\Client\BookingController::class, 'cancel'])->name('client.bookings.cancel');
+
+// Rotas de busca
+Route::get('/properties', [Site\PropertyController::class, 'index'])->name('site.properties.index');
+Route::get('/properties/{id}', [Site\PropertyController::class, 'show'])->name('site.properties.show');
+Route::get('/search/suggestions', [Site\PropertyController::class, 'searchSuggestions'])->name('site.search.suggestions');

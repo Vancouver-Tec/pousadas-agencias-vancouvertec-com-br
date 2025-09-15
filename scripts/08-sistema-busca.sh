@@ -7,7 +7,7 @@
 echo "🔍 Iniciando implementação do Sistema de Busca..."
 
 # Criar Service para lógica de busca
-echo "📝 Criando SearchService..."
+echo "📋 Criando SearchService..."
 mkdir -p app/Services
 cat > app/Services/SearchService.php << 'EOF'
 <?php
@@ -265,7 +265,7 @@ class PropertyController extends Controller
 EOF
 
 # Criar Controller para API de busca
-echo "🔌 Criando API SearchController..."
+echo "📌 Criando API SearchController..."
 mkdir -p app/Http/Controllers/Api
 cat > app/Http/Controllers/Api/SearchController.php << 'EOF'
 <?php
@@ -274,6 +274,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\SearchService;
+use App\Http\Controllers\Site\PropertyController;
 use Illuminate\Http\Request;
 
 class SearchController extends Controller
@@ -322,16 +323,8 @@ class SearchController extends Controller
 
     public function suggestions(Request $request)
     {
-        $term = $request->get('term');
-        
-        if (strlen($term) < 2) {
-            return response()->json([
-                'success' => true,
-                'data' => []
-            ]);
-        }
-
-        $suggestions = app(PropertyController::class)->searchSuggestions($request);
+        $propertyController = new PropertyController($this->searchService);
+        $suggestions = $propertyController->searchSuggestions($request);
         
         return response()->json([
             'success' => true,
@@ -351,12 +344,37 @@ class SearchController extends Controller
 }
 EOF
 
-echo "✅ Script 08-sistema-busca.sh - Parte 1/2 criado com sucesso!"
+# Adicionar rotas de busca
+echo "🛣️ Adicionando rotas de busca..."
+
+# Rotas web
+cat >> routes/web.php << 'EOF'
+
+// Rotas de busca
+Route::get('/properties', [Site\PropertyController::class, 'index'])->name('site.properties.index');
+Route::get('/properties/{id}', [Site\PropertyController::class, 'show'])->name('site.properties.show');
+Route::get('/search/suggestions', [Site\PropertyController::class, 'searchSuggestions'])->name('site.search.suggestions');
+EOF
+
+# Rotas API
+cat >> routes/api.php << 'EOF'
+
+// API de busca
+Route::prefix('search')->group(function () {
+    Route::get('/', [Api\SearchController::class, 'search']);
+    Route::get('/filters', [Api\SearchController::class, 'filters']);
+    Route::get('/suggestions', [Api\SearchController::class, 'suggestions']);
+    Route::get('/popular-destinations', [Api\SearchController::class, 'popularDestinations']);
+});
+EOF
+
+echo "✅ Script 08-sistema-busca.sh criado com sucesso!"
 echo ""
 echo "📁 Arquivos criados:"
 echo "   ✅ app/Services/SearchService.php - Lógica de busca completa"
 echo "   ✅ app/Http/Controllers/Site/PropertyController.php - Controller atualizado"
 echo "   ✅ app/Http/Controllers/Api/SearchController.php - API de busca"
+echo "   ✅ Rotas web e API adicionadas"
 echo ""
 echo "🔍 Funcionalidades implementadas:"
 echo "   ✅ Busca por destino (cidade/estado/propriedade)"
