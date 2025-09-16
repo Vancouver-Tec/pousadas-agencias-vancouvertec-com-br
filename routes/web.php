@@ -69,3 +69,6 @@ Route::get('/lang/{locale}', function ($locale) {
     }
     return redirect()->back();
 })->name('lang.switch');
+
+// Rotas de busca e sugestões
+Route::get('/search/suggestions', [App\Http\Controllers\Site\PropertiesController::class, 'suggestions'])->name('site.search.suggestions');
