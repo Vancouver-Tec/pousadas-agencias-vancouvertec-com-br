@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600">
+  <defs>
+    <linearGradient id="romanticGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e056fd;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ff3838;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="600" fill="url(#romanticGrad)"/>
+  <path d="M300,200 C300,150 350,150 350,200 C350,150 400,150 400,200 C400,250 350,300 350,300 C350,300 300,250 300,200 Z" fill="white" opacity="0.15"/>
+  <path d="M800,350 C800,300 850,300 850,350 C850,300 900,300 900,350 C900,400 850,450 850,450 C850,450 800,400 800,350 Z" fill="white" opacity="0.1"/>
+  <text x="600" y="250" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="48" font-weight="bold">
+    Momentos Românticos
+  </text>
+  <text x="600" y="320" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="28" opacity="0.9">
+    Escapadas perfeitas para casais apaixonados
+  </text>
+  <rect x="500" y="380" width="200" height="60" rx="30" fill="white" opacity="0.2"/>
+  <text x="600" y="420" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="18" font-weight="bold">
+    15% OFF PRIMEIRA RESERVA
+  </text>
+</svg>

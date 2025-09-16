@@ -11,12 +11,7 @@ class PropertyPhoto extends Model
     use HasFactory;
 
     protected $fillable = [
-        'property_id',
-        'filename',
-        'original_name',
-        'alt_text',
-        'sort_order',
-        'is_primary'
+        'property_id', 'filename', 'original_name', 'alt_text', 'sort_order', 'is_primary'
     ];
 
     protected $casts = [

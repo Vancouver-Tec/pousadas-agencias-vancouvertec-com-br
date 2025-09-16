@@ -12,38 +12,15 @@ class Property extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'description', 
-        'type',
-        'property_type',
-        'address',
-        'city_id',
-        'state_id',
-        'country',
-        'zip_code',
-        'latitude',
-        'longitude',
-        'price_per_night',
-        'max_guests',
-        'bedrooms',
-        'bathrooms',
-        'amenities',
-        'rating',
-        'average_rating',
-        'reviews_count',
-        'active',
-        'featured',
-        'instant_book',
-        'check_in_hours',
-        'check_out_hours',
-        'house_rules',
-        'cancellation_policy'
+        'name', 'description', 'type', 'property_type', 'address',
+        'city', 'state', 'country', 'zip_code', 'latitude', 'longitude',
+        'price_per_night', 'max_guests', 'bedrooms', 'bathrooms',
+        'amenities', 'rating', 'average_rating', 'reviews_count',
+        'active', 'featured', 'instant_book'
     ];
 
     protected $casts = [
         'amenities' => 'array',
-        'check_in_hours' => 'array', 
-        'check_out_hours' => 'array',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
         'price_per_night' => 'decimal:2',
@@ -55,16 +32,6 @@ class Property extends Model
     ];
 
     // Relacionamentos
-    public function city(): BelongsTo
-    {
-        return $this->belongsTo(City::class);
-    }
-
-    public function state(): BelongsTo
-    {
-        return $this->belongsTo(State::class);
-    }
-
     public function photos(): HasMany
     {
         return $this->hasMany(PropertyPhoto::class)->orderBy('sort_order');
@@ -102,16 +69,12 @@ class Property extends Model
             $bookingQuery->where('status', '!=', 'cancelled')
                         ->where(function($dateQuery) use ($checkIn, $checkOut) {
                             $dateQuery->whereBetween('check_in', [$checkIn, $checkOut])
-                                     ->orWhereBetween('check_out', [$checkIn, $checkOut])
-                                     ->orWhere(function($overlapQuery) use ($checkIn, $checkOut) {
-                                         $overlapQuery->where('check_in', '<=', $checkIn)
-                                                     ->where('check_out', '>=', $checkOut);
-                                     });
+                                     ->orWhereBetween('check_out', [$checkIn, $checkOut]);
                         });
         });
     }
 
-    // Accessors
+    // Accessors - Tratamento seguro de dados
     public function getMainPhotoAttribute()
     {
         $photo = $this->photos()->where('is_primary', true)->first();
@@ -123,13 +86,18 @@ class Property extends Model
         return 'R$ ' . number_format($this->price_per_night, 2, ',', '.');
     }
 
-    public function getRatingStarsAttribute()
+    public function getCityNameAttribute()
     {
-        $rating = $this->average_rating ?: $this->rating;
-        $stars = '';
-        for ($i = 1; $i <= 5; $i++) {
-            $stars .= $i <= $rating ? '★' : '☆';
-        }
-        return $stars;
+        return $this->city ?? 'Cidade não informada';
+    }
+
+    public function getStateNameAttribute()
+    {
+        return $this->state ?? 'Estado não informado';
+    }
+
+    public function getAverageRatingFormatAttribute()
+    {
+        return number_format($this->average_rating ?: $this->rating ?: 0, 1);
     }
 }
