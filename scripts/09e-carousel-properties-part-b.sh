@@ -1,3 +1,14 @@
+#!/bin/bash
+
+# 🏨 Script 09e-B - Carrosseis com Propriedades do Banco (Parte B)
+# Vancouver-Tec Pousadas & Agências
+# Views completas com carrosseis estilo Booking.com
+
+echo "🏨 Parte B: Views com carrosseis de propriedades..."
+
+# Criar view home completa com carrosseis
+echo "🏠 Criando view home com carrosseis..."
+cat > resources/views/site/home.blade.php << 'EOF'
 @extends('layouts.site')
 
 @section('title', $title)
@@ -189,6 +200,10 @@
     </div>
 </section>
 @endif
+EOF
+
+echo "Continuando view home..."
+cat >> resources/views/site/home.blade.php << 'EOF'
 
 <!-- Ofertas para o fim de semana -->
 @if($weekendOffers && $weekendOffers->count() > 0)
@@ -425,3 +440,26 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
+EOF
+
+echo "✅ Script 09e-carousel-properties-part-b.sh criado!"
+echo ""
+echo "🏨 Parte B implementada:"
+echo "   ✅ View home.blade.php com 3 carrosseis de propriedades"
+echo "   ✅ Cards estilo Booking.com com badges e avaliações"
+echo "   ✅ Sistema de preços riscados para ofertas"
+echo "   ✅ Botões de favoritar e navegação"
+echo "   ✅ JavaScript para carrosseis e autocomplete"
+echo ""
+echo "🎨 Carrosseis implementados:"
+echo "   ✅ 'Procurando a estadia perfeita?' - propriedades similares"
+echo "   ✅ 'Ofertas para o fim de semana' - com descontos"
+echo "   ✅ 'Acomodação exclusiva' - propriedades premium"
+echo ""
+echo "💡 Para executar: chmod +x 09e-carousel-properties-part-b.sh && ./09e-carousel-properties-part-b.sh"
+echo ""
+echo "🚀 Execute as duas partes em sequência:"
+echo "   1. ./09e-carousel-properties-part-a.sh"
+echo "   2. ./09e-carousel-properties-part-b.sh"
+echo ""
+echo "📱 Pronto! Página inicial completa com carrosseis estilo Booking.com!"
