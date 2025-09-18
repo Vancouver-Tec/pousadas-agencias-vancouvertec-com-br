@@ -7,120 +7,158 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Validation\Rules;
 
 class AuthController extends Controller
 {
     public function showLogin()
     {
-        if (Auth::check()) {
-            return $this->redirectToDashboard();
-        }
-        
-        return view('auth.login');
+        return view('site.auth.login');
     }
-    
+
     public function login(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'email' => 'required|email',
-            'password' => 'required|min:6',
+            'password' => 'required',
         ], [
-            'email.required' => 'O e-mail é obrigatório.',
-            'email.email' => 'Digite um e-mail válido.',
-            'password.required' => 'A senha é obrigatória.',
-            'password.min' => 'A senha deve ter pelo menos 6 caracteres.',
+            'email.required' => 'O email é obrigatório',
+            'email.email' => 'Digite um email válido',
+            'password.required' => 'A senha é obrigatória'
         ]);
-
-        if ($validator->fails()) {
-            return back()
-                ->withErrors($validator)
-                ->withInput($request->only('email'));
-        }
 
         $credentials = $request->only('email', 'password');
         $remember = $request->boolean('remember');
 
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
+
+            $user = Auth::user();
             
-            return $this->redirectToDashboard()
-                ->with('success', 'Login realizado com sucesso!');
+            // Redirecionar baseado no tipo de usuário
+            if ($user->role === 'admin') {
+                return redirect()->intended(route('admin.dashboard'))->with('success', 'Login realizado com sucesso!');
+            } else {
+                return redirect()->intended(route('client.dashboard'))->with('success', 'Bem-vindo de volta!');
+            }
         }
 
-        return back()
-            ->withErrors(['email' => 'Credenciais inválidas.'])
-            ->withInput($request->only('email'));
+        return back()->withErrors([
+            'email' => 'As credenciais não correspondem aos nossos registros.',
+        ])->onlyInput('email');
     }
-    
+
     public function showRegister()
     {
-        if (Auth::check()) {
-            return $this->redirectToDashboard();
-        }
-        
-        return view('auth.register');
+        return view('site.auth.register');
     }
-    
+
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'phone' => 'nullable|string|max:20',
-            'document' => 'nullable|string|max:20',
-            'birth_date' => 'nullable|date',
+            'terms' => 'required|accepted'
         ], [
-            'name.required' => 'O nome é obrigatório.',
-            'email.required' => 'O e-mail é obrigatório.',
-            'email.email' => 'Digite um e-mail válido.',
-            'email.unique' => 'Este e-mail já está sendo usado.',
-            'password.required' => 'A senha é obrigatória.',
-            'password.min' => 'A senha deve ter pelo menos 6 caracteres.',
-            'password.confirmed' => 'A confirmação da senha não confere.',
+            'name.required' => 'O nome é obrigatório',
+            'email.required' => 'O email é obrigatório',
+            'email.email' => 'Digite um email válido',
+            'email.unique' => 'Este email já está cadastrado',
+            'password.required' => 'A senha é obrigatória',
+            'password.confirmed' => 'As senhas não coincidem',
+            'terms.accepted' => 'Você deve aceitar os termos de uso'
         ]);
-
-        if ($validator->fails()) {
-            return back()
-                ->withErrors($validator)
-                ->withInput($request->except(['password', 'password_confirmation']));
-        }
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'client',
             'phone' => $request->phone,
-            'document' => $request->document,
-            'birth_date' => $request->birth_date,
-            'preferred_language' => app()->getLocale(),
+            'role' => 'client',
+            'active' => true
         ]);
 
+        event(new Registered($user));
+
         Auth::login($user);
-        
-        return redirect()->route('client.dashboard')
-            ->with('success', 'Conta criada com sucesso! Bem-vindo(a)!');
+
+        return redirect(route('client.dashboard'))->with('success', 'Conta criada com sucesso!');
     }
-    
+
+    public function showForgotPassword()
+    {
+        return view('site.auth.forgot-password');
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email'
+        ], [
+            'email.required' => 'O email é obrigatório',
+            'email.email' => 'Digite um email válido'
+        ]);
+
+        $status = Password::sendResetLink(
+            $request->only('email')
+        );
+
+        if ($status === Password::RESET_LINK_SENT) {
+            return back()->with('status', 'Link de recuperação enviado para seu email!');
+        }
+
+        return back()->withErrors(['email' => 'Não encontramos um usuário com este email.']);
+    }
+
+    public function showResetPassword(Request $request)
+    {
+        return view('site.auth.reset-password', [
+            'token' => $request->token,
+            'email' => $request->email
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'email.required' => 'O email é obrigatório',
+            'password.required' => 'A senha é obrigatória',
+            'password.confirmed' => 'As senhas não coincidem'
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ]);
+
+                $user->save();
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return redirect()->route('login')->with('status', 'Senha alterada com sucesso!');
+        }
+
+        return back()->withErrors(['email' => 'Token inválido ou expirado.']);
+    }
+
     public function logout(Request $request)
     {
         Auth::logout();
-        
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        
-        return redirect()->route('home')
-            ->with('success', 'Logout realizado com sucesso!');
-    }
-    
-    private function redirectToDashboard()
-    {
-        if (Auth::user()->isAdmin()) {
-            return redirect()->route('admin.dashboard');
-        }
-        
-        return redirect()->route('client.dashboard');
+
+        return redirect()->route('site.home')->with('success', 'Logout realizado com sucesso!');
     }
 }

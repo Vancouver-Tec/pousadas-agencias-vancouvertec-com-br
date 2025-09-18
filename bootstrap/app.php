@@ -13,12 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
-            \App\Http\Middleware\LanguageMiddleware::class,
+            App\Http\Middleware\LanguageMiddleware::class,
         ]);
         
         $middleware->alias([
-            'client' => \App\Http\Middleware\ClientMiddleware::class,
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'check.role' => App\Http\Middleware\CheckRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
