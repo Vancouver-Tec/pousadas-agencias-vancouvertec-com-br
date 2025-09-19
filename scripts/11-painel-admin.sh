@@ -1,3 +1,14 @@
+#!/bin/bash
+
+# 🏛️ Script 11 - Painel Administrativo Completo
+# Vancouver-Tec Pousadas & Agências
+# Dashboard admin com CRUD, relatórios e gestão completa
+
+echo "🏛️ Iniciando implementação do painel administrativo..."
+
+# 1. Atualizar AdminDashboardController
+echo "📊 Criando AdminDashboardController completo..."
+cat > app/Http/Controllers/Admin/DashboardController.php << 'EOF'
 <?php
 
 namespace App\Http\Controllers\Admin;
@@ -285,3 +296,19 @@ class DashboardController extends Controller
         return view('admin.reports', compact('revenueData', 'topPropertiesByRevenue'));
     }
 }
+EOF
+
+echo "✅ Script 11-painel-admin.sh (Parte A) criado com sucesso!"
+echo ""
+echo "📋 Parte A implementada:"
+echo "   ✅ AdminDashboardController completo"
+echo "   ✅ Dashboard com estatísticas e gráficos"
+echo "   ✅ CRUD completo de propriedades"
+echo "   ✅ Gestão de reservas e usuários"
+echo "   ✅ Sistema de upload de fotos"
+echo "   ✅ Relatórios avançados"
+echo ""
+echo "🔄 Para executar:"
+echo "   chmod +x 11-painel-admin.sh && ./11-painel-admin.sh"
+echo ""
+echo "⚠️ Script extenso - aguarde 'continuar' para Parte B (Views Admin)!"

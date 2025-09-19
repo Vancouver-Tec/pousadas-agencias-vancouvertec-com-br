@@ -1,3 +1,14 @@
+#!/bin/bash
+
+# 👤 Script 12 - Painel do Cliente Completo
+# Vancouver-Tec Pousadas & Agências
+# Dashboard cliente com reservas, favoritos e perfil
+
+echo "👤 Iniciando implementação do painel do cliente..."
+
+# 1. Atualizar ClientDashboardController
+echo "📋 Criando ClientDashboardController completo..."
+cat > app/Http/Controllers/Client/DashboardController.php << 'EOF'
 <?php
 
 namespace App\Http\Controllers\Client;
@@ -286,3 +297,21 @@ class DashboardController extends Controller
         return view('client.notifications', compact('notifications'));
     }
 }
+EOF
+
+echo "✅ Script 12-painel-client.sh (Parte A) criado com sucesso!"
+echo ""
+echo "📋 Parte A implementada:"
+echo "   ✅ ClientDashboardController completo"
+echo "   ✅ Dashboard com estatísticas personalizadas"
+echo "   ✅ Gestão completa de reservas"
+echo "   ✅ Sistema de favoritos"
+echo "   ✅ Perfil editável do cliente"
+echo "   ✅ Sistema de avaliações"
+echo "   ✅ Cancelamento de reservas com regras"
+echo "   ✅ Sistema de notificações"
+echo ""
+echo "🔄 Para executar:"
+echo "   chmod +x 12-painel-client.sh && ./12-painel-client.sh"
+echo ""
+echo "⚠️ Script extenso - aguarde 'continuar' para Parte B (Views Cliente)!"
